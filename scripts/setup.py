@@ -8,15 +8,17 @@ Installs tools to ~/.cursor/tools/ and configures per-user settings:
 Run from the skill repo root: python scripts/setup.py
 """
 
+import json
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 
 SKILL_DIR = Path(__file__).resolve().parent.parent
 TOOLS_SRC = SKILL_DIR / "tools"
 TOOLS_DEST = Path.home() / ".cursor" / "tools"
-VENV_PYTHON = TOOLS_DEST / ".venv" / "bin" / "python"
+
+CALENDAR_CONFIG = TOOLS_DEST / ".calendar_config.json"
+UTILIZATION_CONFIG = TOOLS_DEST / ".utilization_config.json"
 
 
 def install_tools():
@@ -42,47 +44,40 @@ def setup_calendar():
     """Configure the main calendar iCal feed."""
     print("\n— Calendar Setup —")
     print("Your iCal feed URL (for meetings in weekly notes).")
+    print("Find it in Google Calendar: Settings > your calendar > 'Secret address in iCal format'")
     
-    ical_url = input("iCal feed URL (or Enter to skip): ").strip()
+    ical_url = input("\niCal feed URL (or Enter to skip): ").strip()
     if not ical_url:
-        print("Skipped. Run later with:")
-        print("  ~/.cursor/tools/.venv/bin/python ~/.cursor/tools/calendar_tool.py --setup \"URL\"")
+        print("Skipped.")
         return
     
-    calendar_tool = TOOLS_DEST / "calendar_tool.py"
-    if not VENV_PYTHON.exists() or not calendar_tool.exists():
-        print(f"Warning: calendar_tool.py not found. Run manually after installing tools.")
-        return
+    config = {}
+    if CALENDAR_CONFIG.exists():
+        config = json.loads(CALENDAR_CONFIG.read_text())
     
-    try:
-        subprocess.run([str(VENV_PYTHON), str(calendar_tool), "--setup", ical_url], check=True)
-        print("Calendar configured.")
-    except subprocess.CalledProcessError as e:
-        print(f"Calendar setup failed: {e}", file=sys.stderr)
+    config["ical_url"] = ical_url
+    CALENDAR_CONFIG.write_text(json.dumps(config, indent=2))
+    print(f"Calendar configured. Saved to {CALENDAR_CONFIG}")
 
 
 def setup_holiday_calendar():
     """Configure the holiday/PTO calendar for utilization tracking."""
     print("\n— Holiday Calendar Setup —")
     print("Your PTO/holiday iCal feed (for utilization tracking).")
-    print("This should be a separate calendar with only PTO events.")
+    print("This should be a separate calendar containing only your PTO/holiday events.")
     
-    ical_url = input("Holiday iCal feed URL (or Enter to skip): ").strip()
+    ical_url = input("\nHoliday iCal feed URL (or Enter to skip): ").strip()
     if not ical_url:
-        print("Skipped. Run later with:")
-        print("  ~/.cursor/tools/.venv/bin/python ~/.cursor/tools/utilization_tracker.py --setup-holidays \"URL\"")
+        print("Skipped.")
         return
     
-    util_tool = TOOLS_DEST / "utilization_tracker.py"
-    if not VENV_PYTHON.exists() or not util_tool.exists():
-        print(f"Warning: utilization_tracker.py not found. Run manually after installing tools.")
-        return
+    config = {}
+    if UTILIZATION_CONFIG.exists():
+        config = json.loads(UTILIZATION_CONFIG.read_text())
     
-    try:
-        subprocess.run([str(VENV_PYTHON), str(util_tool), "--setup-holidays", ical_url], check=True)
-        print("Holiday calendar configured.")
-    except subprocess.CalledProcessError as e:
-        print(f"Holiday calendar setup failed: {e}", file=sys.stderr)
+    config["holiday_ical_url"] = ical_url
+    UTILIZATION_CONFIG.write_text(json.dumps(config, indent=2))
+    print(f"Holiday calendar configured. Saved to {UTILIZATION_CONFIG}")
 
 
 def main():
@@ -95,9 +90,6 @@ def main():
     print("  2. Configure your calendar iCal feed")
     print("  3. Configure your holiday calendar (for utilization tracking)")
     print()
-    print("GitHub username comes from `gh` (logged-in user).")
-    print("Lattice URL is shared (see org-defaults.md).")
-    print()
     
     # Install tools
     install_tools()
@@ -107,8 +99,11 @@ def main():
     setup_holiday_calendar()
     
     print("\n" + "=" * 50)
-    print("Setup complete! You can now run the weekly-update skill.")
+    print("Setup complete!")
     print("=" * 50)
+    print()
+    print("You can now use the weekly-update skill.")
+    print("Run 'utilization check' to see your current utilization status.")
 
 
 if __name__ == "__main__":
