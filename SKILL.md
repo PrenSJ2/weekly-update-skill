@@ -1,10 +1,10 @@
 ---
 name: weekly-update
 description: >
-  Generate weekly notes from MindNode, calendar, Jira MCP (HSBCPP assignments and
-  worklogs), and GitHub commits; then populate Salesforce timesheet and Lattice.
-  Use when the user asks for weekly notes, weekly summary, what they did this week,
-  or to fill timesheet/Lattice.
+  Generate weekly notes from MindNode, calendar, Jira MCP, and GitHub commits;
+  populate Salesforce timesheet and Lattice; track utilization against bonus
+  targets and warn on over-acceleration or PTO impact. Use for weekly notes,
+  weekly summary, what they did this week, timesheet, Lattice, or utilization check.
 allowed-tools:
   - Bash
   - Read
@@ -15,7 +15,7 @@ allowed-tools:
 
 # Weekly Update Skill
 
-Generates a structured weekly summary from MindNode daily notes, calendar, **Jira MCP**, and GitHub commits; then fills Salesforce timesheet and Lattice weekly update.
+Generates a structured weekly summary from MindNode daily notes, calendar, **Jira MCP**, and GitHub commits; fills Salesforce timesheet and Lattice weekly update; and **tracks utilization** against bonus accelerators.
 
 **Jira:** Read `~/.cursor/skills/jira-mcp-weekly/SKILL.md` and query Jira MCP during every weekly run.
 
@@ -23,6 +23,7 @@ Generates a structured weekly summary from MindNode daily notes, calendar, **Jir
 
 - User asks for **weekly notes**, **weekly summary**, or **what they did this week**
 - User wants to **populate Salesforce timesheet** or **Lattice update** from the same workflow
+- User wants to **check utilization**, see if they're over-accelerating, or understand PTO impact
 
 ## Workflow summary
 
@@ -35,6 +36,7 @@ Generates a structured weekly summary from MindNode daily notes, calendar, **Jir
 7. **Step 6:** Personal summary tone from user's mood if given, else ask once.
 8. **Step 7:** Run Salesforce — `salesforce_timesheet.py view` then `fill` (default unless user opts out).
 9. **Step 8:** Run Lattice — `lattice_update.py` with four fields (default unless user opts out).
+10. **Step 9:** Run utilization check — `utilization_tracker.py check` — warn on over-acceleration (>94%), suggest PTO; warn if upcoming holidays risk missing target, suggest weekly hour increases.
 
 All tools run from `~/.cursor/tools/` using the venv:
 
@@ -48,6 +50,7 @@ Before running the workflow, read:
 
 - **Jira queries and MCP usage:** `~/.cursor/skills/jira-mcp-weekly/SKILL.md`
 - **Workflow (steps, format, tone, tools):** [workflow.md](workflow.md)
+- **Utilization targets and org defaults:** [org-defaults.md](org-defaults.md)
 
 Paths above are relative to this skill directory.
 

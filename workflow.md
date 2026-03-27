@@ -200,7 +200,45 @@ If an automation Chrome instance is already running (from a previous step), the 
 
 ---
 
-## Calendar Setup (first time only)
+## Step 9: Utilization Check (warnings and recommendations)
+
+**Run by default** at the end of the weekly update. This step checks the user's current utilization against bonus targets and adjusts projections based on upcoming PTO.
+
+### What it does
+
+1. **Scrapes Salesforce dashboard** for current utilization %
+2. **Reads holiday calendar** for upcoming PTO days this quarter
+3. **Calculates projections:** remaining workdays, impact of PTO, projected end-of-quarter utilization
+4. **Warns** if user is above max accelerator (94%) — extra hours yield no bonus, suggest PTO
+5. **Warns** if upcoming PTO puts user at risk of missing target — suggest increasing weekly hours
+
+### Run the check
+
+```bash
+~/.cursor/tools/.venv/bin/python ~/.cursor/tools/utilization_tracker.py check
+```
+
+### Output
+
+The tool outputs:
+- Current utilization % vs targets (80% target, 87% accel 1, 94% max)
+- Remaining workdays in quarter
+- Upcoming PTO days and their impact
+- **Warnings** (e.g., "Above max accelerator", "PTO will reduce utilization by X%")
+- **Recommendations** (e.g., "Take X days PTO before quarter end", "Increase weekly billable by Y hours")
+
+### Present to user
+
+After running the check, summarize the key findings:
+- If **over max accelerator**: "You're at X%, above the 94% max. Consider taking Y days off before [quarter end] — extra hours won't increase your bonus."
+- If **PTO upcoming + below target**: "Your upcoming PTO reduces available billable days. To hit target, increase this week's hours by X."
+- If **on track**: "You're at X%, on track for accelerator tier Y."
+
+---
+
+## Setup (first time only)
+
+### Calendar Setup
 
 If the user hasn't configured their calendar yet, ask them for their iCal feed URL and run:
 
@@ -212,3 +250,13 @@ Common feed URL locations:
 - **Google Calendar:** Settings → your calendar → "Secret address in iCal format"
 - **Outlook 365:** Settings → Calendar → Shared calendars → "Publish a calendar" → ICS link
 - **Apple Calendar:** Export as .ics or use CalDAV
+
+### Holiday Calendar Setup
+
+For utilization tracking to account for PTO, the user needs to configure their holiday calendar:
+
+```bash
+~/.cursor/tools/.venv/bin/python ~/.cursor/tools/utilization_tracker.py --setup-holidays "https://calendar.google.com/calendar/ical/..."
+```
+
+This should be a separate calendar (or filtered feed) containing only PTO/holiday events.
